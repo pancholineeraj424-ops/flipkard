@@ -162,7 +162,7 @@ export default function LoginPage() {
               </div>
 
               <p className="text-xs text-muted-foreground">
-                By continuing, you agree to FlipCard's{" "}
+                By continuing, you agree to Flipkard's{" "}
                 <Link href="#" className="text-[#2874f0] hover:underline">
                   Terms of Use
                 </Link>{" "}
@@ -223,7 +223,7 @@ export default function LoginPage() {
                 onClick={() => setView("signup")}
                 className="text-sm text-[#2874f0] font-medium hover:underline text-center mt-2"
               >
-                New to FlipCard? Create an account
+                New to Flipkard? Create an account
               </button>
             </form>
           )}
@@ -278,7 +278,7 @@ export default function LoginPage() {
               </div>
 
               <p className="text-xs text-muted-foreground">
-                By continuing, you agree to FlipCard's{" "}
+                By continuing, you agree to Flipkard's{" "}
                 <Link href="#" className="text-[#2874f0] hover:underline">
                   Terms of Use
                 </Link>{" "}
@@ -339,7 +339,7 @@ export default function LoginPage() {
                 onClick={() => setView("signup")}
                 className="text-sm text-[#2874f0] font-medium hover:underline text-center mt-2"
               >
-                New to FlipCard? Create an account
+                New to Flipkard? Create an account
               </button>
             </form>
           )}
@@ -475,7 +475,7 @@ export default function LoginPage() {
               </div>
 
               <p className="text-xs text-muted-foreground">
-                By signing up, you agree to FlipCard's{" "}
+                By signing up, you agree to Flipkard's{" "}
                 <Link href="#" className="text-[#2874f0] hover:underline">
                   Terms of Use
                 </Link>{" "}

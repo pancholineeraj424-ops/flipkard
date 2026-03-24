@@ -10,7 +10,7 @@ const roboto = Roboto({
 })
 
 export const metadata: Metadata = {
-  title: 'FlipCard — Online Shopping India',
+  title: 'Flipkard — Online Shopping India',
   description: 'Shop electronics, fashion, home, appliances and more at best prices',
 }
 
@@ -35,7 +35,7 @@ export default function RootLayout({
                   <li className="hover:underline cursor-pointer">Contact Us</li>
                   <li className="hover:underline cursor-pointer">About Us</li>
                   <li className="hover:underline cursor-pointer">Careers</li>
-                  <li className="hover:underline cursor-pointer">FlipCard Stories</li>
+                  <li className="hover:underline cursor-pointer">Flipkard Stories</li>
                   <li className="hover:underline cursor-pointer">Press</li>
                 </ul>
               </div>
@@ -77,7 +77,7 @@ export default function RootLayout({
                 <span>Help Center</span>
               </div>
               <div className="text-gray-500 text-xs">
-                © 2007-2026 FlipCard.com
+                © 2007-2026 Flipkard.com
               </div>
             </div>
           </footer>

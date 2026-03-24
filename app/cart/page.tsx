@@ -159,9 +159,12 @@ export default function CartPage() {
 
           {/* Place Order button — bottom of items on mobile */}
           <div className="px-5 py-4 border-t border-border bg-muted/30 md:hidden">
-            <button className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-sm text-sm hover:bg-primary/90 transition-colors">
+            <Link
+              href="/checkout"
+              className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-sm text-sm hover:bg-primary/90 transition-colors flex items-center justify-center"
+            >
               Place Order
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -224,9 +227,12 @@ export default function CartPage() {
 
             {/* Place Order CTA */}
             <div className="px-5 pb-5 hidden md:block">
-              <button className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-sm text-sm hover:bg-primary/90 transition-colors">
+              <Link
+                href="/checkout"
+                className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-sm text-sm hover:bg-primary/90 transition-colors flex items-center justify-center"
+              >
                 Place Order
-              </button>
+              </Link>
             </div>
           </div>
 

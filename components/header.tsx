@@ -135,11 +135,20 @@ export function Header() {
                 <DropdownMenuContent align="end" className="w-52">
                   <div className="flex items-center justify-between px-3 py-2 border-b">
                     <span className="text-sm text-muted-foreground">New customer?</span>
-                    <span className="text-sm font-semibold text-[#2874f0] cursor-pointer">Sign Up</span>
+                    <Link href="/login" className="text-sm font-semibold text-[#2874f0] hover:underline">Sign Up</Link>
                   </div>
-                  <DropdownMenuItem>My Profile</DropdownMenuItem>
-                  <DropdownMenuItem>Orders</DropdownMenuItem>
-                  <DropdownMenuItem>Wishlist</DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/login" className="cursor-pointer">Login</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="cursor-pointer">My Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile?tab=orders" className="cursor-pointer">Orders</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile?tab=wishlist" className="cursor-pointer">Wishlist</Link>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -188,17 +197,19 @@ export function Header() {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[280px] p-0">
-                  <div className="bg-[#2874f0] text-white px-5 py-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                        <User className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <div className="font-semibold">Hello, Guest</div>
-                        <div className="text-xs text-white/70">Login / Sign Up</div>
+                  <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                    <div className="bg-[#2874f0] text-white px-5 py-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                          <User className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="font-semibold">Hello, Guest</div>
+                          <div className="text-xs text-white/70">Login / Sign Up</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                   <div className="flex flex-col py-2">
                     <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Categories

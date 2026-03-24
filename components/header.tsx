@@ -23,16 +23,24 @@ import {
   Dumbbell,
   BookOpen,
   Sofa,
+  Heart,
+  Package,
+  LogOut,
+  Settings,
+  Shield,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useCart } from "@/lib/cart-context"
+import { useAuth } from "@/lib/auth-context"
+import { useWishlist } from "@/lib/wishlist-context"
 
 const categoryIcons = [
   { id: "for-you", name: "For You", icon: Sparkles },
@@ -56,12 +64,19 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const router = useRouter()
   const { totalItems } = useCart()
+  const { user, logout } = useAuth()
+  const { totalItems: wishlistItems } = useWishlist()
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
       router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`)
     }
+  }
+
+  const handleLogout = () => {
+    logout()
+    router.push("/")
   }
 
   return (
@@ -76,8 +91,8 @@ export function Header() {
               href="/" 
               className="flex-shrink-0 bg-[#2874f0] text-white px-4 py-1.5 rounded-sm flex items-center gap-2 font-bold text-lg"
             >
-              <span className="text-xl">f</span>
-              <span>FlipCard</span>
+              <span className="text-xl">F</span>
+              <span>FlipKart</span>
             </Link>
 
             {/* Travel button */}
@@ -124,22 +139,86 @@ export function Header() {
 
             {/* Right actions */}
             <div className="hidden md:flex items-center gap-1">
+              {/* User Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="text-gray-700 hover:bg-gray-100 font-medium gap-1 h-9">
                     <User className="h-4 w-4" />
-                    Login
+                    {user ? user.name.split(" ")[0] : "Login"}
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
-                  <div className="flex items-center justify-between px-3 py-2 border-b">
-                    <span className="text-sm text-muted-foreground">New customer?</span>
-                    <span className="text-sm font-semibold text-[#2874f0] cursor-pointer">Sign Up</span>
-                  </div>
-                  <DropdownMenuItem>My Profile</DropdownMenuItem>
-                  <DropdownMenuItem>Orders</DropdownMenuItem>
-                  <DropdownMenuItem>Wishlist</DropdownMenuItem>
+                <DropdownMenuContent align="end" className="w-56">
+                  {user ? (
+                    <>
+                      <div className="px-3 py-2 border-b">
+                        <p className="text-sm font-medium">{user.name}</p>
+                        <p className="text-xs text-muted-foreground">{user.email || user.phone}</p>
+                      </div>
+                      <DropdownMenuItem asChild>
+                        <Link href="/profile" className="cursor-pointer">
+                          <User className="h-4 w-4 mr-2" />
+                          My Profile
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/orders" className="cursor-pointer">
+                          <Package className="h-4 w-4 mr-2" />
+                          Orders
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/wishlist" className="cursor-pointer">
+                          <Heart className="h-4 w-4 mr-2" />
+                          Wishlist
+                          {wishlistItems > 0 && (
+                            <span className="ml-auto text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
+                              {wishlistItems}
+                            </span>
+                          )}
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin" className="cursor-pointer">
+                          <Shield className="h-4 w-4 mr-2" />
+                          Admin Panel
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Logout
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between px-3 py-2 border-b">
+                        <span className="text-sm text-muted-foreground">New customer?</span>
+                        <Link href="/login" className="text-sm font-semibold text-[#2874f0]">
+                          Sign Up
+                        </Link>
+                      </div>
+                      <DropdownMenuItem asChild>
+                        <Link href="/login" className="cursor-pointer">
+                          <User className="h-4 w-4 mr-2" />
+                          Login
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/orders" className="cursor-pointer">
+                          <Package className="h-4 w-4 mr-2" />
+                          Orders
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/wishlist" className="cursor-pointer">
+                          <Heart className="h-4 w-4 mr-2" />
+                          Wishlist
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -158,6 +237,18 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              {/* Wishlist */}
+              <Link href="/wishlist">
+                <Button variant="ghost" className="text-gray-700 hover:bg-gray-100 font-medium gap-1.5 h-9 relative">
+                  <Heart className="h-5 w-5" />
+                  {wishlistItems > 0 && (
+                    <span className="absolute -top-0.5 left-4 bg-[#ff6161] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                      {wishlistItems}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+
               <Link href="/cart">
                 <Button variant="ghost" className="text-gray-700 hover:bg-gray-100 font-medium gap-1.5 h-9 relative">
                   <ShoppingCart className="h-5 w-5" />
@@ -173,6 +264,14 @@ export function Header() {
 
             {/* Mobile buttons */}
             <div className="flex md:hidden items-center gap-1">
+              <Link href="/wishlist" className="relative p-2">
+                <Heart className="h-6 w-6 text-gray-700" />
+                {wishlistItems > 0 && (
+                  <span className="absolute top-0 right-0 bg-[#ff6161] text-white text-[10px] font-bold px-1 rounded-full min-w-[16px] text-center">
+                    {wishlistItems}
+                  </span>
+                )}
+              </Link>
               <Link href="/cart" className="relative p-2">
                 <ShoppingCart className="h-6 w-6 text-gray-700" />
                 {totalItems > 0 && (
@@ -189,16 +288,78 @@ export function Header() {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[280px] p-0">
                   <div className="bg-[#2874f0] text-white px-5 py-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                        <User className="h-5 w-5" />
+                    {user ? (
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                          <User className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="font-semibold">{user.name}</div>
+                          <div className="text-xs text-white/70">{user.email || user.phone}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-semibold">Hello, Guest</div>
-                        <div className="text-xs text-white/70">Login / Sign Up</div>
-                      </div>
-                    </div>
+                    ) : (
+                      <Link
+                        href="/login"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                          <User className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="font-semibold">Hello, Guest</div>
+                          <div className="text-xs text-white/70">Login / Sign Up</div>
+                        </div>
+                      </Link>
+                    )}
                   </div>
+                  
+                  {/* Quick links */}
+                  <div className="border-b border-gray-200">
+                    <Link
+                      href="/orders"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-5 py-3 text-sm hover:bg-gray-50"
+                    >
+                      <Package className="h-5 w-5 text-gray-600" />
+                      <span>My Orders</span>
+                    </Link>
+                    <Link
+                      href="/wishlist"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-5 py-3 text-sm hover:bg-gray-50"
+                    >
+                      <Heart className="h-5 w-5 text-gray-600" />
+                      <span>Wishlist</span>
+                      {wishlistItems > 0 && (
+                        <span className="ml-auto text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
+                          {wishlistItems}
+                        </span>
+                      )}
+                    </Link>
+                    {user && (
+                      <>
+                        <Link
+                          href="/profile"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-5 py-3 text-sm hover:bg-gray-50"
+                        >
+                          <Settings className="h-5 w-5 text-gray-600" />
+                          <span>My Profile</span>
+                        </Link>
+                        <Link
+                          href="/admin"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-5 py-3 text-sm hover:bg-gray-50"
+                        >
+                          <Shield className="h-5 w-5 text-gray-600" />
+                          <span>Admin Panel</span>
+                        </Link>
+                      </>
+                    )}
+                  </div>
+
                   <div className="flex flex-col py-2">
                     <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Categories
@@ -215,6 +376,22 @@ export function Header() {
                       </Link>
                     ))}
                   </div>
+
+                  {user && (
+                    <div className="p-4 border-t border-gray-200">
+                      <Button
+                        variant="outline"
+                        className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                        onClick={() => {
+                          handleLogout()
+                          setMobileMenuOpen(false)
+                        }}
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Logout
+                      </Button>
+                    </div>
+                  )}
                 </SheetContent>
               </Sheet>
             </div>

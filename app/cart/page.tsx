@@ -1,13 +1,25 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Minus, Plus, Trash2, ShoppingBag, ChevronRight, Tag } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
+import { useAuth } from "@/lib/auth-context"
 import { formatPrice, calculateDiscount } from "@/lib/products"
 
 export default function CartPage() {
+  const router = useRouter()
   const { items, updateQuantity, removeFromCart, totalPrice, totalItems } = useCart()
+  const { user } = useAuth()
+
+  const handlePlaceOrder = () => {
+    if (!user) {
+      router.push("/login?redirect=/checkout")
+    } else {
+      router.push("/checkout")
+    }
+  }
 
   const totalOriginalPrice = items.reduce(
     (sum, item) => sum + item.originalPrice * item.quantity,
@@ -159,7 +171,10 @@ export default function CartPage() {
 
           {/* Place Order button — bottom of items on mobile */}
           <div className="px-5 py-4 border-t border-border bg-muted/30 md:hidden">
-            <button className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-sm text-sm hover:bg-primary/90 transition-colors">
+            <button 
+              onClick={handlePlaceOrder}
+              className="w-full bg-[#fb641b] text-white font-bold py-3 rounded-sm text-sm hover:bg-[#e85a19] transition-colors"
+            >
               Place Order
             </button>
           </div>
@@ -224,7 +239,10 @@ export default function CartPage() {
 
             {/* Place Order CTA */}
             <div className="px-5 pb-5 hidden md:block">
-              <button className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-sm text-sm hover:bg-primary/90 transition-colors">
+              <button 
+                onClick={handlePlaceOrder}
+                className="w-full bg-[#fb641b] text-white font-bold py-3.5 rounded-sm text-sm hover:bg-[#e85a19] transition-colors"
+              >
                 Place Order
               </button>
             </div>

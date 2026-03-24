@@ -4,8 +4,9 @@ import Link from "next/link"
 import Image from "next/image"
 import { Star, ShoppingCart, Heart } from "lucide-react"
 import { useCart, Product } from "@/lib/cart-context"
+import { useWishlist } from "@/lib/wishlist-context"
 import { formatPrice, calculateDiscount } from "@/lib/products"
-import { useState } from "react"
+import { toast } from "sonner"
 
 interface ProductCardProps {
   product: Product
@@ -13,19 +14,27 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart()
-  const [wishlisted, setWishlisted] = useState(false)
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
   const discount = calculateDiscount(product.originalPrice, product.price)
+  const wishlisted = isInWishlist(product.id)
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     addToCart(product)
+    toast.success("Added to cart")
   }
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setWishlisted((w) => !w)
+    if (wishlisted) {
+      removeFromWishlist(product.id)
+      toast.success("Removed from wishlist")
+    } else {
+      addToWishlist(product)
+      toast.success("Added to wishlist")
+    }
   }
 
   return (
@@ -43,8 +52,8 @@ export function ProductCard({ product }: ProductCardProps) {
           {/* Wishlist */}
           <button
             onClick={handleWishlist}
-            className="absolute top-0 right-0 p-1.5 bg-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10"
-            aria-label="Add to wishlist"
+            className="absolute top-0 right-0 p-1.5 bg-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:scale-110"
+            aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
             <Heart
               className={`h-4 w-4 transition-colors ${wishlisted ? "fill-red-500 text-red-500" : "text-gray-400"}`}

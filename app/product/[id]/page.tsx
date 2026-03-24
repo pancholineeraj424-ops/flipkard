@@ -17,7 +17,9 @@ import {
   Share2,
 } from "lucide-react"
 import { ProductCard } from "@/components/product-card"
+import { ProductReviews } from "@/components/product-reviews"
 import { useCart } from "@/lib/cart-context"
+import { useWishlist } from "@/lib/wishlist-context"
 import {
   getProductById,
   products,
@@ -29,8 +31,9 @@ export default function ProductDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { addToCart } = useCart()
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
   const product = getProductById(params.id as string)
-  const [wishlisted, setWishlisted] = useState(false)
+  const wishlisted = product ? isInWishlist(product.id) : false
   const [selectedImg, setSelectedImg] = useState(0)
 
   if (!product) {
@@ -99,7 +102,13 @@ export default function ProductDetailPage() {
               {/* Wishlist + Share */}
               <div className="absolute top-3 right-3 flex flex-col gap-2">
                 <button
-                  onClick={() => setWishlisted((w) => !w)}
+                  onClick={() => {
+                    if (wishlisted) {
+                      removeFromWishlist(product.id)
+                    } else {
+                      addToWishlist(product)
+                    }
+                  }}
                   className="w-8 h-8 bg-white rounded-full shadow flex items-center justify-center hover:shadow-md"
                   aria-label="Add to wishlist"
                 >
@@ -253,6 +262,9 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Reviews section */}
+      <ProductReviews productId={product.id} productName={product.name} />
 
       {/* Related products */}
       {relatedProducts.length > 0 && (

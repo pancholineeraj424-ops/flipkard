@@ -2,7 +2,12 @@ import type { Metadata } from 'next'
 import { Roboto } from 'next/font/google'
 import './globals.css'
 import { CartProvider } from '@/lib/cart-context'
+import { AuthProvider } from '@/lib/auth-context'
+import { WishlistProvider } from '@/lib/wishlist-context'
+import { OrdersProvider } from '@/lib/orders-context'
+import { ReviewsProvider } from '@/lib/reviews-context'
 import { Header } from '@/components/header'
+import { Toaster } from '@/components/ui/sonner'
 
 const roboto = Roboto({ 
   subsets: ['latin'],
@@ -22,8 +27,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${roboto.className} font-sans antialiased`}>
-        <CartProvider>
-          <Header />
+        <AuthProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <OrdersProvider>
+                <ReviewsProvider>
+                  <Header />
           <main className="min-h-screen">
             {children}
           </main>
@@ -81,7 +90,12 @@ export default function RootLayout({
               </div>
             </div>
           </footer>
-        </CartProvider>
+                  <Toaster />
+                </ReviewsProvider>
+              </OrdersProvider>
+            </WishlistProvider>
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   )

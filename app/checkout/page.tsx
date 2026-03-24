@@ -20,7 +20,10 @@ import {
   Plus,
 } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
+import { useAuth, Address } from "@/lib/auth-context"
+import { useOrders } from "@/lib/orders-context"
 import { formatPrice, calculateDiscount } from "@/lib/products"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -28,55 +31,44 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 type CheckoutStep = "address" | "payment" | "review"
 
-interface Address {
-  id: string
-  name: string
-  phone: string
-  pincode: string
-  locality: string
-  address: string
-  city: string
-  state: string
-  type: "home" | "work"
-  isDefault?: boolean
-}
-
-const savedAddresses: Address[] = [
-  {
-    id: "1",
-    name: "John Doe",
-    phone: "9876543210",
-    pincode: "560001",
-    locality: "MG Road",
-    address: "123, ABC Apartments, 4th Floor",
-    city: "Bangalore",
-    state: "Karnataka",
-    type: "home",
-    isDefault: true,
-  },
-]
-
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, totalPrice, clearCart } = useCart()
+  const { user, isAuthenticated, addAddress } = useAuth()
+  const { createOrder } = useOrders()
   const [step, setStep] = useState<CheckoutStep>("address")
-  const [selectedAddress, setSelectedAddress] = useState<string>(savedAddresses[0]?.id || "")
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("")
+  const [orderId, setOrderId] = useState<string>("")
   const [showAddressForm, setShowAddressForm] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<string>("upi")
   const [upiId, setUpiId] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [orderPlaced, setOrderPlaced] = useState(false)
 
+  // Get user addresses
+  const savedAddresses = user?.addresses || []
+  
+  // Set default address on mount
+  useState(() => {
+    const defaultAddr = savedAddresses.find(a => a.isDefault)
+    if (defaultAddr && !selectedAddressId) {
+      setSelectedAddressId(defaultAddr.id)
+    } else if (savedAddresses.length > 0 && !selectedAddressId) {
+      setSelectedAddressId(savedAddresses[0].id)
+    }
+  })
+
   // Address form state
   const [newAddress, setNewAddress] = useState<Partial<Address>>({
-    name: "",
-    phone: "",
+    name: user?.name || "",
+    phone: user?.phone || "",
     pincode: "",
     locality: "",
     address: "",
     city: "",
     state: "",
     type: "home",
+    isDefault: false
   })
 
   const [expandedSection, setExpandedSection] = useState<CheckoutStep>("address")
@@ -126,7 +118,7 @@ export default function CheckoutPage() {
         <div className="bg-card border border-border rounded-sm p-6 w-full">
           <div className="flex items-center justify-between mb-4 pb-4 border-b border-border">
             <span className="text-sm text-muted-foreground">Order ID</span>
-            <span className="font-mono font-bold text-foreground">#FC{Date.now().toString().slice(-8)}</span>
+            <span className="font-mono font-bold text-foreground">{orderId}</span>
           </div>
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm text-muted-foreground">Total Amount</span>
@@ -139,10 +131,10 @@ export default function CheckoutPage() {
         </div>
         <div className="flex gap-4">
           <Link
-            href="/profile"
+            href={`/orders/${orderId}`}
             className="px-6 py-3 text-sm font-medium border border-primary text-primary rounded-sm hover:bg-primary/5 transition-colors"
           >
-            View Orders
+            Track Order
           </Link>
           <Link
             href="/products"
@@ -156,13 +148,45 @@ export default function CheckoutPage() {
   }
 
   const handlePlaceOrder = () => {
+    if (!user) {
+      toast.error("Please login to place order")
+      router.push("/login?redirect=/checkout")
+      return
+    }
+
+    const selectedAddress = savedAddresses.find(a => a.id === selectedAddressId)
+    if (!selectedAddress) {
+      toast.error("Please select a delivery address")
+      return
+    }
+
     setIsProcessing(true)
-    // Simulate order processing
+    
+    // Create order
+    const estimatedDelivery = new Date()
+    estimatedDelivery.setDate(estimatedDelivery.getDate() + 5)
+    
+    const order = createOrder({
+      userId: user.id,
+      items: items,
+      address: selectedAddress,
+      paymentMethod: paymentMethod,
+      paymentStatus: paymentMethod === "cod" ? "pending" : "paid",
+      status: "pending",
+      subtotal: totalOriginalPrice,
+      discount: totalDiscount,
+      deliveryCharge: deliveryCharge,
+      total: finalAmount,
+      estimatedDelivery: estimatedDelivery.toISOString().split('T')[0]
+    })
+
     setTimeout(() => {
       setIsProcessing(false)
+      setOrderId(order.id)
       setOrderPlaced(true)
       clearCart()
-    }, 2000)
+      toast.success("Order placed successfully!")
+    }, 1500)
   }
 
   const SectionHeader = ({
@@ -219,21 +243,29 @@ export default function CheckoutPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 items-start">
         {/* Main checkout sections */}
         <div className="flex flex-col gap-3">
-          {/* Login section (always completed for demo) */}
+          {/* Login section */}
           <div className="bg-card border border-border rounded-sm overflow-hidden">
             <div className="flex items-center gap-4 px-5 py-4 bg-primary/5">
               <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
-                <CheckCircle2 className="h-4 w-4" />
+                {isAuthenticated ? <CheckCircle2 className="h-4 w-4" /> : "1"}
               </span>
               <div className="flex items-center gap-3">
                 <span className="font-bold text-sm uppercase tracking-wide text-foreground">
                   Login
                 </span>
-                <span className="text-sm text-muted-foreground">John Doe, +91 9876543210</span>
+                {isAuthenticated && user ? (
+                  <span className="text-sm text-muted-foreground">{user.name}, +91 {user.phone}</span>
+                ) : (
+                  <Link href="/login?redirect=/checkout" className="text-sm text-primary font-medium hover:underline">
+                    Login to continue
+                  </Link>
+                )}
               </div>
-              <button className="ml-auto text-sm text-primary font-medium hover:underline">
-                Change
-              </button>
+              {isAuthenticated && (
+                <Link href="/login" className="ml-auto text-sm text-primary font-medium hover:underline">
+                  Change
+                </Link>
+              )}
             </div>
           </div>
 
@@ -251,12 +283,12 @@ export default function CheckoutPage() {
                 {/* Saved addresses */}
                 {savedAddresses.length > 0 && !showAddressForm && (
                   <div className="space-y-3">
-                    <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress}>
+                    <RadioGroup value={selectedAddressId} onValueChange={setSelectedAddressId}>
                       {savedAddresses.map((addr) => (
                         <div
                           key={addr.id}
                           className={`border rounded-sm p-4 cursor-pointer transition-colors ${
-                            selectedAddress === addr.id
+                            selectedAddressId === addr.id
                               ? "border-primary bg-primary/5"
                               : "border-border hover:border-primary/50"
                           }`}
@@ -293,7 +325,7 @@ export default function CheckoutPage() {
                         setStep("payment")
                         setExpandedSection("payment")
                       }}
-                      disabled={!selectedAddress}
+                      disabled={!selectedAddressId}
                       className="w-full sm:w-auto bg-[#fb641b] hover:bg-[#e85a18] text-white font-semibold"
                     >
                       Deliver Here
@@ -401,13 +433,27 @@ export default function CheckoutPage() {
                       <Button
                         type="button"
                         onClick={() => {
-                          setShowAddressForm(false)
-                          setStep("payment")
-                          setExpandedSection("payment")
+                          if (newAddress.name && newAddress.phone && newAddress.address && newAddress.city && newAddress.state && newAddress.pincode) {
+                            addAddress({
+                              name: newAddress.name,
+                              phone: newAddress.phone,
+                              pincode: newAddress.pincode,
+                              locality: newAddress.locality || "",
+                              address: newAddress.address,
+                              city: newAddress.city,
+                              state: newAddress.state,
+                              type: newAddress.type || "home",
+                              isDefault: savedAddresses.length === 0
+                            })
+                            setShowAddressForm(false)
+                            toast.success("Address saved!")
+                          } else {
+                            toast.error("Please fill all required fields")
+                          }
                         }}
                         className="bg-[#fb641b] hover:bg-[#e85a18] text-white font-semibold"
                       >
-                        Save & Continue
+                        Save Address
                       </Button>
                       <Button
                         type="button"

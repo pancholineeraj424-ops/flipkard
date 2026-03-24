@@ -6,6 +6,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Eye, EyeOff, Phone, Mail, ArrowRight, ChevronLeft } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -74,6 +75,8 @@ function LoginContent() {
     }
   }
 
+  const [generatedOTP, setGeneratedOTP] = useState("")
+
   const handleSendOTP = async () => {
     if (phone.length !== 10) {
       setError("Please enter a valid 10-digit phone number")
@@ -82,16 +85,33 @@ function LoginContent() {
     setError("")
     setIsLoading(true)
     
+    // Generate a random 6-digit OTP
+    const newOTP = Math.floor(100000 + Math.random() * 900000).toString()
+    setGeneratedOTP(newOTP)
+    
     // Simulate sending OTP
     await new Promise(resolve => setTimeout(resolve, 1000))
     setOtpSent(true)
     setIsLoading(false)
+    
+    // Show OTP in toast notification (for demo purposes)
+    toast.success(`OTP Sent Successfully!`, {
+      description: `Your OTP is: ${newOTP}`,
+      duration: 30000, // Show for 30 seconds
+    })
   }
 
   const handleOTPLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setIsLoading(true)
+
+    // Verify OTP matches the generated one (for demo)
+    if (otp !== generatedOTP) {
+      setError(`Invalid OTP. Please enter the OTP shown in the notification.`)
+      setIsLoading(false)
+      return
+    }
 
     try {
       const success = await loginWithOTP(phone, otp)
@@ -421,7 +441,7 @@ function LoginContent() {
               {/* Demo info */}
               <div className="mt-auto pt-4 border-t border-border">
                 <p className="text-xs text-muted-foreground text-center">
-                  For demo, enter any 10-digit phone and any 6-digit OTP
+                  Enter any 10-digit phone number. OTP will appear in a notification at the top right.
                 </p>
               </div>
             </form>

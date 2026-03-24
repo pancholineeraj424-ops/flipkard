@@ -89,10 +89,9 @@ export function Header() {
             {/* Logo button - blue */}
             <Link 
               href="/" 
-              className="flex-shrink-0 bg-[#2874f0] text-white px-4 py-1.5 rounded-sm flex items-center gap-2 font-bold text-lg"
+              className="flex-shrink-0 bg-[#2874f0] text-white px-4 py-1.5 rounded-sm flex items-center font-bold text-lg"
             >
-              <span className="text-xl">F</span>
-              <span>FlipKart</span>
+              FlipKart
             </Link>
 
             {/* Travel button */}

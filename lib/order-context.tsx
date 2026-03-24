@@ -43,6 +43,7 @@ interface OrderContextType {
   getOrderById: (orderId: string) => Order | undefined
   cancelOrder: (orderId: string) => boolean
   getUserOrders: (userId: string) => Order[]
+  updateOrderStatus: (orderId: string, newStatus: OrderStatus) => boolean
 }
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined)
@@ -145,6 +146,46 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     return orders.filter(order => order.userId === userId)
   }
 
+  const updateOrderStatus = (orderId: string, newStatus: OrderStatus): boolean => {
+    const order = orders.find(o => o.id === orderId)
+    if (!order || order.orderStatus === "cancelled") {
+      return false
+    }
+
+    const statusDescriptions: Record<OrderStatus, string> = {
+      confirmed: "Order confirmed",
+      processing: "Order is being processed",
+      shipped: "Order has been shipped",
+      out_for_delivery: "Order is out for delivery",
+      delivered: "Order delivered successfully",
+      cancelled: "Order cancelled"
+    }
+
+    setOrders(prev =>
+      prev.map(o =>
+        o.id === orderId
+          ? {
+              ...o,
+              orderStatus: newStatus,
+              paymentStatus: newStatus === "delivered" && o.paymentMethod === "cod" ? "paid" : o.paymentStatus,
+              tracking: [
+                ...o.tracking,
+                {
+                  status: newStatus,
+                  timestamp: new Date().toISOString(),
+                  description: statusDescriptions[newStatus],
+                  location: newStatus === "shipped" ? "Dispatch Center" : 
+                           newStatus === "out_for_delivery" ? "Local Hub" :
+                           newStatus === "delivered" ? o.address.city : undefined
+                }
+              ]
+            }
+          : o
+      )
+    )
+    return true
+  }
+
   return (
     <OrderContext.Provider
       value={{
@@ -152,7 +193,8 @@ export function OrderProvider({ children }: { children: ReactNode }) {
         createOrder,
         getOrderById,
         cancelOrder,
-        getUserOrders
+        getUserOrders,
+        updateOrderStatus
       }}
     >
       {children}

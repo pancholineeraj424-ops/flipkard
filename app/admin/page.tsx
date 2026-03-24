@@ -29,7 +29,7 @@ import {
   Settings,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { useOrders, OrderStatus } from "@/lib/order-context"
+import { useOrders, OrderStatus, Order } from "@/lib/order-context"
 import { useReviews } from "@/lib/review-context"
 import { products, formatPrice } from "@/lib/products"
 import { Button } from "@/components/ui/button"
@@ -71,10 +71,14 @@ const statusLabels: Record<OrderStatus, string> = {
 export default function AdminPage() {
   const router = useRouter()
   const { user, isLoading } = useAuth()
-  const { orders } = useOrders()
+  const { orders, updateOrderStatus } = useOrders()
   const { reviews } = useReviews()
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard")
   const [searchQuery, setSearchQuery] = useState("")
+
+  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
+    updateOrderStatus(orderId, newStatus)
+  }
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -504,6 +508,9 @@ export default function AdminPage() {
                           <th className="text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground px-4 py-3">
                             Total
                           </th>
+                          <th className="text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground px-4 py-3">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
@@ -541,6 +548,25 @@ export default function AdminPage() {
                               </td>
                               <td className="px-4 py-3 text-right">
                                 <span className="text-sm font-bold">{formatPrice(order.total)}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <Select
+                                  value={order.orderStatus}
+                                  onValueChange={(value) => handleStatusChange(order.id, value as OrderStatus)}
+                                  disabled={order.orderStatus === "delivered" || order.orderStatus === "cancelled"}
+                                >
+                                  <SelectTrigger className="w-36 h-8 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                                    <SelectItem value="processing">Processing</SelectItem>
+                                    <SelectItem value="shipped">Shipped</SelectItem>
+                                    <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
+                                    <SelectItem value="delivered">Delivered</SelectItem>
+                                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </td>
                             </tr>
                           )

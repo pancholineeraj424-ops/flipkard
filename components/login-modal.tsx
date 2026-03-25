@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/lib/auth-context"
-import { setupRecaptcha, sendOTP, verifyOTP, isDemoMode, type ConfirmationResult, type RecaptchaVerifier } from "@/lib/firebase"
+import { setupRecaptcha, sendOTP, verifyOTP, isDemoMode, type ConfirmationResult, type RecaptchaVerifierType } from "@/lib/firebase"
 
 interface LoginModalProps {
   open: boolean
@@ -15,7 +15,7 @@ interface LoginModalProps {
 
 type Step = "phone" | "otp" | "success"
 
-const OTP_LENGTH = 6
+const OTP_LENGTH = 4
 const RESEND_TIMER = 30
 const MAX_OTP_ATTEMPTS = 5
 
@@ -29,7 +29,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
   const [otpAttempts, setOtpAttempts] = useState(0)
   
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([])
-  const recaptchaRef = useRef<RecaptchaVerifier | null>(null)
+  const recaptchaRef = useRef<RecaptchaVerifierType | null>(null)
   const confirmationResultRef = useRef<ConfirmationResult | null>(null)
   
   const { login } = useAuth()
@@ -241,7 +241,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 
               {isDemoMode && (
                 <div className="bg-amber-50 border border-amber-200 rounded-sm p-3 text-sm text-amber-800">
-                  <strong>Demo Mode:</strong> Enter any valid number. Use OTP <code className="bg-amber-100 px-1 rounded">123456</code> to verify.
+                  <strong>Demo Mode:</strong> Firebase not configured. Enter any valid number and use OTP <code className="bg-amber-100 px-1 rounded">1234</code> to verify.
                 </div>
               )}
 
@@ -273,10 +273,10 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
           {step === "otp" && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
                   Enter {OTP_LENGTH}-digit OTP
                 </label>
-                <div className="flex gap-2 justify-center" onPaste={handleOtpPaste}>
+                <div className="flex gap-3 justify-center" onPaste={handleOtpPaste}>
                   {otp.map((digit, index) => (
                     <Input
                       key={index}
@@ -287,7 +287,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
                       value={digit}
                       onChange={(e) => handleOtpChange(index, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                      className="w-12 h-12 text-center text-lg font-semibold"
+                      className="w-14 h-14 text-center text-2xl font-bold border-2 border-gray-300 focus:border-[#2874f0] focus:ring-[#2874f0] rounded-lg"
                       autoFocus={index === 0}
                     />
                   ))}
@@ -302,9 +302,9 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
               )}
 
               {isLoading && (
-                <div className="flex items-center justify-center gap-2 text-gray-600 text-sm">
+                <div className="flex items-center justify-center gap-2 text-[#2874f0] text-sm">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Verifying...
+                  Verifying OTP...
                 </div>
               )}
 

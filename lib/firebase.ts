@@ -1,3 +1,5 @@
+"use client"
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app"
 import { 
   getAuth, 
@@ -8,7 +10,7 @@ import {
 } from "firebase/auth"
 
 // Check if Firebase is configured with valid credentials
-const hasValidConfig = Boolean(
+const hasValidConfig = typeof window !== "undefined" && Boolean(
   process.env.NEXT_PUBLIC_FIREBASE_API_KEY && 
   process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== "" &&
   process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== "undefined"
@@ -31,7 +33,7 @@ let auth: Auth | null = null
 
 // Lazy initialization to prevent server-side errors
 function initializeFirebase() {
-  if (isDemoMode || typeof window === "undefined") {
+  if (typeof window === "undefined" || isDemoMode) {
     return { app: null, auth: null }
   }
   
@@ -53,12 +55,11 @@ export function getFirebaseAuth(): Auth | null {
   return auth
 }
 
-export { app, auth }
 export { RecaptchaVerifier }
-export type { ConfirmationResult }
+export type { ConfirmationResult, RecaptchaVerifier as RecaptchaVerifierType }
 
 export async function setupRecaptcha(elementId: string): Promise<RecaptchaVerifier | null> {
-  if (isDemoMode) return null
+  if (typeof window === "undefined" || isDemoMode) return null
   
   const firebaseAuth = getFirebaseAuth()
   if (!firebaseAuth) return null
@@ -109,8 +110,8 @@ export async function verifyOTP(
   otp: string
 ): Promise<boolean> {
   if (isDemoMode) {
-    // For demo, accept "123456" as valid OTP
-    return otp === "123456"
+    // For demo, accept "1234" as valid OTP (4 digits)
+    return otp === "1234"
   }
 
   try {

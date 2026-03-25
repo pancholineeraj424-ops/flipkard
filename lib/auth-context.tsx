@@ -1,8 +1,6 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react"
-import { onAuthStateChanged, User as FirebaseUser, signOut } from "firebase/auth"
-import { getFirebaseAuth, isDemoMode } from "./firebase"
 
 interface User {
   phoneNumber: string
@@ -49,48 +47,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // First check localStorage for persisted session
+    // Check localStorage for persisted session
     const storedUser = getStoredUser()
     if (storedUser) {
       setUser(storedUser)
     }
+    setIsLoading(false)
 
-    if (isDemoMode) {
-      // In demo mode, just use localStorage
-      setIsLoading(false)
-      return
-    }
+    // Dynamic import for Firebase to avoid SSR issues
+    const setupFirebaseAuth = async () => {
+      try {
+        const { getFirebaseAuth, isDemoMode } = await import("./firebase")
+        
+        if (isDemoMode) return
 
-    // Try to get Firebase auth - may be null if not properly initialized
-    const auth = getFirebaseAuth()
-    if (!auth) {
-      setIsLoading(false)
-      return
-    }
+        const auth = getFirebaseAuth()
+        if (!auth) return
 
-    // Listen to Firebase auth state changes
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser && firebaseUser.phoneNumber) {
-        const newUser: User = {
-          phoneNumber: firebaseUser.phoneNumber.replace("+91", ""),
-          uid: firebaseUser.uid,
-        }
-        setUser(newUser)
-        storeUser(newUser)
-      } else if (!storedUser) {
-        setUser(null)
-        storeUser(null)
+        const { onAuthStateChanged } = await import("firebase/auth")
+        
+        onAuthStateChanged(auth, (firebaseUser) => {
+          if (firebaseUser && firebaseUser.phoneNumber) {
+            const newUser: User = {
+              phoneNumber: firebaseUser.phoneNumber.replace("+91", ""),
+              uid: firebaseUser.uid,
+            }
+            setUser(newUser)
+            storeUser(newUser)
+          }
+        })
+      } catch (error) {
+        console.error("Firebase auth setup error:", error)
       }
-      setIsLoading(false)
-    })
+    }
 
-    return () => unsubscribe()
+    setupFirebaseAuth()
   }, [])
 
   const login = (phoneNumber: string) => {
     const newUser: User = {
       phoneNumber,
-      uid: isDemoMode ? `demo_${Date.now()}` : phoneNumber,
+      uid: `user_${Date.now()}`,
     }
     setUser(newUser)
     storeUser(newUser)
@@ -98,9 +95,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      const { getFirebaseAuth, isDemoMode } = await import("./firebase")
       if (!isDemoMode) {
         const auth = getFirebaseAuth()
         if (auth) {
+          const { signOut } = await import("firebase/auth")
           await signOut(auth)
         }
       }

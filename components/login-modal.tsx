@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/lib/auth-context"
-import { setupRecaptcha, sendOTP, verifyOTP, isDemoMode, type ConfirmationResult, type RecaptchaVerifierType } from "@/lib/firebase"
+import type { ConfirmationResult, RecaptchaVerifierType } from "@/lib/firebase"
 
 interface LoginModalProps {
   open: boolean
@@ -27,12 +27,22 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
   const [error, setError] = useState("")
   const [resendTimer, setResendTimer] = useState(0)
   const [otpAttempts, setOtpAttempts] = useState(0)
+  const [isDemoMode, setIsDemoMode] = useState(true)
   
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([])
   const recaptchaRef = useRef<RecaptchaVerifierType | null>(null)
   const confirmationResultRef = useRef<ConfirmationResult | null>(null)
   
   const { login } = useAuth()
+
+  // Check if demo mode on mount
+  useEffect(() => {
+    const checkDemoMode = async () => {
+      const firebase = await import("@/lib/firebase")
+      setIsDemoMode(firebase.isDemoMode)
+    }
+    checkDemoMode()
+  }, [])
 
   // Reset state when modal closes
   useEffect(() => {
@@ -59,11 +69,14 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
   // Setup reCAPTCHA when on phone step
   useEffect(() => {
     if (open && step === "phone" && !isDemoMode) {
-      setupRecaptcha("recaptcha-container").then((verifier) => {
+      const setupRecaptchaVerifier = async () => {
+        const { setupRecaptcha } = await import("@/lib/firebase")
+        const verifier = await setupRecaptcha("recaptcha-container")
         recaptchaRef.current = verifier
-      })
+      }
+      setupRecaptchaVerifier()
     }
-  }, [open, step])
+  }, [open, step, isDemoMode])
 
   const validatePhoneNumber = (number: string): boolean => {
     const cleaned = number.replace(/\D/g, "")
@@ -87,6 +100,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
         setStep("otp")
         setResendTimer(RESEND_TIMER)
       } else {
+        const { sendOTP } = await import("@/lib/firebase")
         const confirmation = await sendOTP(phoneNumber, recaptchaRef.current)
         confirmationResultRef.current = confirmation
         setStep("otp")
@@ -145,6 +159,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
     setOtpAttempts((prev) => prev + 1)
 
     try {
+      const { verifyOTP } = await import("@/lib/firebase")
       const isValid = await verifyOTP(confirmationResultRef.current, otpCode)
       
       if (isValid) {

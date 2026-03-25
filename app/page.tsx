@@ -115,7 +115,7 @@ export default function HomePage() {
               priority
             />
             <div className="absolute top-4 right-4">
-              <div className="text-gray-700 font-medium text-sm">realme | <span className="text-[#2874f0]">Flipkart</span></div>
+              <div className="text-gray-700 font-medium text-sm">realme | <span className="text-[#2874f0]">FlipKard</span></div>
               <div className="text-gray-700 text-xs">First-Sale</div>
             </div>
             <div className="absolute bottom-4 left-4 right-4">

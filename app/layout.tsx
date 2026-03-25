@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Roboto } from 'next/font/google'
 import './globals.css'
 import { CartProvider } from '@/lib/cart-context'
+import { AuthProvider } from '@/lib/auth-context'
 import { Header } from '@/components/header'
 
 const roboto = Roboto({ 
@@ -10,7 +11,7 @@ const roboto = Roboto({
 })
 
 export const metadata: Metadata = {
-  title: 'FlipCard — Online Shopping India',
+  title: 'FlipKard — Online Shopping India',
   description: 'Shop electronics, fashion, home, appliances and more at best prices',
 }
 
@@ -22,8 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${roboto.className} font-sans antialiased`}>
-        <CartProvider>
-          <Header />
+        <AuthProvider>
+          <CartProvider>
+            <Header />
           <main className="min-h-screen">
             {children}
           </main>
@@ -35,7 +37,7 @@ export default function RootLayout({
                   <li className="hover:underline cursor-pointer">Contact Us</li>
                   <li className="hover:underline cursor-pointer">About Us</li>
                   <li className="hover:underline cursor-pointer">Careers</li>
-                  <li className="hover:underline cursor-pointer">FlipCard Stories</li>
+                  <li className="hover:underline cursor-pointer">FlipKard Stories</li>
                   <li className="hover:underline cursor-pointer">Press</li>
                 </ul>
               </div>
@@ -77,11 +79,12 @@ export default function RootLayout({
                 <span>Help Center</span>
               </div>
               <div className="text-gray-500 text-xs">
-                © 2007-2026 FlipCard.com
+                © 2007-2026 FlipKard.com
               </div>
             </div>
-          </footer>
-        </CartProvider>
+            </footer>
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   )

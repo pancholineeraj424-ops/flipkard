@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Flipkart exact colors */
+  /* FlipKard exact colors */
   --background: #f1f3f6;
   --foreground: #212121;
   --card: #ffffff;
@@ -12,7 +12,7 @@
   --popover: #ffffff;
   --popover-foreground: #212121;
 
-  /* Primary: Flipkart blue #2874f0 */
+  /* Primary: FlipKard blue #2874f0 */
   --primary: #2874f0;
   --primary-foreground: #ffffff;
 

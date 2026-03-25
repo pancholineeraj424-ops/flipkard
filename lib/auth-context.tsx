@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react"
 import { onAuthStateChanged, User as FirebaseUser, signOut } from "firebase/auth"
-import { auth, isDemoMode } from "./firebase"
+import { getFirebaseAuth, isDemoMode } from "./firebase"
 
 interface User {
   phoneNumber: string
@@ -61,6 +61,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    // Try to get Firebase auth - may be null if not properly initialized
+    const auth = getFirebaseAuth()
+    if (!auth) {
+      setIsLoading(false)
+      return
+    }
+
     // Listen to Firebase auth state changes
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser && firebaseUser.phoneNumber) {
@@ -92,7 +99,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       if (!isDemoMode) {
-        await signOut(auth)
+        const auth = getFirebaseAuth()
+        if (auth) {
+          await signOut(auth)
+        }
       }
     } catch (error) {
       console.error("Error signing out:", error)

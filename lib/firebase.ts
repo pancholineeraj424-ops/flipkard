@@ -1,8 +1,20 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app"
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, type Auth } from "firebase/auth"
+import { 
+  getAuth, 
+  RecaptchaVerifier, 
+  signInWithPhoneNumber, 
+  type ConfirmationResult, 
+  type Auth 
+} from "firebase/auth"
 
-// For development/demo mode when Firebase is not configured
-export const isDemoMode = !process.env.NEXT_PUBLIC_FIREBASE_API_KEY
+// Check if Firebase is configured with valid credentials
+const hasValidConfig = Boolean(
+  process.env.NEXT_PUBLIC_FIREBASE_API_KEY && 
+  process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== "" &&
+  process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== "undefined"
+)
+
+export const isDemoMode = !hasValidConfig
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
@@ -17,23 +29,42 @@ const firebaseConfig = {
 let app: FirebaseApp | null = null
 let auth: Auth | null = null
 
-if (!isDemoMode) {
-  try {
-    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)
-    auth = getAuth(app)
-  } catch (error) {
-    console.error("Firebase initialization failed:", error)
+// Lazy initialization to prevent server-side errors
+function initializeFirebase() {
+  if (isDemoMode || typeof window === "undefined") {
+    return { app: null, auth: null }
   }
+  
+  if (!app) {
+    try {
+      app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)
+      auth = getAuth(app)
+    } catch (error) {
+      console.error("Firebase initialization failed:", error)
+      return { app: null, auth: null }
+    }
+  }
+  
+  return { app, auth }
+}
+
+export function getFirebaseAuth(): Auth | null {
+  const { auth } = initializeFirebase()
+  return auth
 }
 
 export { app, auth }
-export type { RecaptchaVerifier, ConfirmationResult }
+export { RecaptchaVerifier }
+export type { ConfirmationResult }
 
 export async function setupRecaptcha(elementId: string): Promise<RecaptchaVerifier | null> {
-  if (isDemoMode || !auth) return null
+  if (isDemoMode) return null
+  
+  const firebaseAuth = getFirebaseAuth()
+  if (!firebaseAuth) return null
   
   try {
-    const recaptchaVerifier = new RecaptchaVerifier(auth, elementId, {
+    const recaptchaVerifier = new RecaptchaVerifier(firebaseAuth, elementId, {
       size: "invisible",
       callback: () => {
         // reCAPTCHA solved
@@ -50,9 +81,14 @@ export async function sendOTP(
   phoneNumber: string, 
   recaptchaVerifier: RecaptchaVerifier | null
 ): Promise<ConfirmationResult | null> {
-  if (isDemoMode || !auth) {
-    // Return null for demo mode
+  if (isDemoMode) {
+    // Return null for demo mode - will be handled in login modal
     return null
+  }
+
+  const firebaseAuth = getFirebaseAuth()
+  if (!firebaseAuth) {
+    throw new Error("Firebase not initialized")
   }
 
   try {
@@ -60,7 +96,7 @@ export async function sendOTP(
       throw new Error("reCAPTCHA not initialized")
     }
     const formattedNumber = `+91${phoneNumber}`
-    const confirmationResult = await signInWithPhoneNumber(auth, formattedNumber, recaptchaVerifier)
+    const confirmationResult = await signInWithPhoneNumber(firebaseAuth, formattedNumber, recaptchaVerifier)
     return confirmationResult
   } catch (error) {
     console.error("Error sending OTP:", error)

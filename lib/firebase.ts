@@ -3,31 +3,34 @@
 import type { FirebaseApp } from "firebase/app"
 import type { Auth, ConfirmationResult, RecaptchaVerifier as RecaptchaVerifierType } from "firebase/auth"
 
-// Check if Firebase is configured
-const hasValidConfig = () => {
-  if (typeof window === "undefined") return false
-  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY
-  return Boolean(apiKey && apiKey !== "" && apiKey !== "undefined")
-}
-
-export const isDemoMode = !hasValidConfig()
-
 // Cached instances
 let firebaseApp: FirebaseApp | null = null
 let firebaseAuth: Auth | null = null
 let isInitialized = false
 
-// Lazy initialization - only when actually needed
+// Check if Firebase is configured - safe for both client and server
+export function checkIsDemoMode(): boolean {
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY
+  return !apiKey || apiKey === "" || apiKey === "undefined"
+}
+
+// Export as getter to avoid issues
+export const isDemoMode = typeof window === "undefined" ? true : checkIsDemoMode()
+
+// Lazy initialization - only when actually needed and only on client
 async function initializeFirebase(): Promise<{ app: FirebaseApp | null; auth: Auth | null }> {
+  // Never initialize on server
   if (typeof window === "undefined") {
     return { app: null, auth: null }
   }
 
-  if (!hasValidConfig()) {
+  // Check if demo mode
+  if (checkIsDemoMode()) {
     return { app: null, auth: null }
   }
 
-  if (isInitialized) {
+  // Return cached if already initialized
+  if (isInitialized && firebaseApp && firebaseAuth) {
     return { app: firebaseApp, auth: firebaseAuth }
   }
 
@@ -56,12 +59,13 @@ async function initializeFirebase(): Promise<{ app: FirebaseApp | null; auth: Au
 }
 
 export async function getFirebaseAuth(): Promise<Auth | null> {
+  if (typeof window === "undefined") return null
   const { auth } = await initializeFirebase()
   return auth
 }
 
 export async function setupRecaptcha(elementId: string): Promise<RecaptchaVerifierType | null> {
-  if (typeof window === "undefined" || !hasValidConfig()) return null
+  if (typeof window === "undefined" || checkIsDemoMode()) return null
 
   try {
     const auth = await getFirebaseAuth()
@@ -72,7 +76,7 @@ export async function setupRecaptcha(elementId: string): Promise<RecaptchaVerifi
     const recaptchaVerifier = new RecaptchaVerifier(auth, elementId, {
       size: "invisible",
       callback: () => {
-        console.log("[v0] reCAPTCHA solved")
+        // reCAPTCHA solved
       },
     })
     
@@ -87,7 +91,7 @@ export async function sendOTP(
   phoneNumber: string,
   recaptchaVerifier: RecaptchaVerifierType | null
 ): Promise<ConfirmationResult | null> {
-  if (!hasValidConfig()) {
+  if (checkIsDemoMode()) {
     // Demo mode - return null, handled in login modal
     return null
   }
@@ -116,7 +120,7 @@ export async function verifyOTP(
   confirmationResult: ConfirmationResult | null,
   otp: string
 ): Promise<boolean> {
-  if (!hasValidConfig()) {
+  if (checkIsDemoMode()) {
     // Demo mode - accept "1234" as valid OTP (4 digits)
     return otp === "1234"
   }

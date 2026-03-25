@@ -56,12 +56,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Dynamic import for Firebase to avoid SSR issues
     const setupFirebaseAuth = async () => {
+      // Only run on client
+      if (typeof window === "undefined") return
+      
       try {
-        const firebase = await import("./firebase")
+        const { checkIsDemoMode, getFirebaseAuth } = await import("./firebase")
         
-        if (firebase.isDemoMode) return
+        if (checkIsDemoMode()) return
 
-        const auth = await firebase.getFirebaseAuth()
+        const auth = await getFirebaseAuth()
         if (!auth) return
 
         const { onAuthStateChanged } = await import("firebase/auth")
@@ -76,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             storeUser(newUser)
           }
         })
-      } catch (error) {
+      } catch {
         // Firebase not configured, using demo mode
       }
     }
@@ -95,15 +98,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      const firebase = await import("./firebase")
-      if (!firebase.isDemoMode) {
-        const auth = await firebase.getFirebaseAuth()
-        if (auth) {
-          const { signOut } = await import("firebase/auth")
-          await signOut(auth)
+      if (typeof window !== "undefined") {
+        const { checkIsDemoMode, getFirebaseAuth } = await import("./firebase")
+        if (!checkIsDemoMode()) {
+          const auth = await getFirebaseAuth()
+          if (auth) {
+            const { signOut } = await import("firebase/auth")
+            await signOut(auth)
+          }
         }
       }
-    } catch (error) {
+    } catch {
       // Ignore logout errors
     }
     setUser(null)

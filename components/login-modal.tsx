@@ -17,7 +17,7 @@ type Step = "phone" | "otp" | "success"
 
 const OTP_LENGTH = 4
 const RESEND_TIMER = 30
-const MAX_OTP_ATTEMPTS = 5
+const MAX_OTP_ATTEMPTS = 3
 
 export function LoginModal({ open, onOpenChange }: LoginModalProps) {
   const [step, setStep] = useState<Step>("phone")
@@ -38,8 +38,9 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
   // Check if demo mode on mount
   useEffect(() => {
     const checkDemoMode = async () => {
-      const firebase = await import("@/lib/firebase")
-      setIsDemoMode(firebase.isDemoMode)
+      if (typeof window === "undefined") return
+      const { checkIsDemoMode } = await import("@/lib/firebase")
+      setIsDemoMode(checkIsDemoMode())
     }
     checkDemoMode()
   }, [])
@@ -68,7 +69,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 
   // Setup reCAPTCHA when on phone step
   useEffect(() => {
-    if (open && step === "phone" && !isDemoMode) {
+    if (open && step === "phone" && !isDemoMode && typeof window !== "undefined") {
       const setupRecaptchaVerifier = async () => {
         const { setupRecaptcha } = await import("@/lib/firebase")
         const verifier = await setupRecaptcha("recaptcha-container")
